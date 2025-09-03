@@ -48,8 +48,8 @@ jobs:
         with:
           server_address: smtp.mail.yahoo.com
           server_port: 465
-          username: ${{ smailyes05@yahoo.fr }}
-          password: ${{  exueysvciveaojkj}}
+          username: ${{smailyes05@yahoo.fr }}
+          password: ${{exueysvciveaojkj}}
           subject: "Playwright Login Test Report"
           to: "smailyes05@yahoo.fr"
           from: "smailyes05@yahoo.fr"
