@@ -31,34 +31,67 @@ jobs:
       - name: Installation des navigateurs Playwright
         run: npx playwright install --with-deps
 
-      # 5️⃣ Lancer uniquement le test Login.spec.js sur Chrome
+      # 5️⃣ Lancer uniquement Login.spec.js sur Chrome avec 2 reporters (html + json)
       - name: Exécution du test Login.spec.js sur Chrome
-        run: npx playwright test tests/demo/Login.spec.js --project=chrome --reporter=html
+        run: |
+          npx playwright test tests/demo/Login.spec.js --project=chrome --reporter=html,json > results.json
 
-      # 6️⃣ Sauvegarder le rapport HTML comme artefact
+      # 6️⃣ Extraire un résumé des résultats
+      - name: Analyse du rapport JSON
+        id: summary
+        run: |
+          passed=$(jq '[.suites[].specs[].tests[].results[] | select(.status=="passed")] | length' results.json)
+          failed=$(jq '[.suites[].specs[].tests[].results[] | select(.status=="failed")] | length' results.json)
+          echo "passed=$passed" >> $GITHUB_OUTPUT
+          echo "failed=$failed" >> $GITHUB_OUTPUT
+
+      # 7️⃣ Sauvegarder le rapport HTML comme artefact
       - name: Sauvegarder le rapport HTML
         uses: actions/upload-artifact@v3
         with:
           name: rapport-playwright
           path: playwright-report/
 
-      # 7️⃣ Envoyer le mail avec le rapport attaché
+      # 8️⃣ Envoyer le mail avec résumé en HTML
       - name: Envoi du rapport par email
+        if: always()
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.mail.yahoo.com
           server_port: 465
           username: ${{ secrets.MAIL_USERNAME }}
           password: ${{ secrets.MAIL_PASSWORD }}
-          subject: "Rapport du test Playwright Login"
+          subject: >-
+            Rapport Playwright Login -
+            ${{ job.status == 'success' && '✅ Succès' ||
+                job.status == 'failure' && '❌ Échec' ||
+                job.status == 'cancelled' && '⚠️ Annulé' ||
+                job.status }}
           to: "smailyes05@yahoo.fr"
           from: "smailyes05@yahoo.fr"
+          content_type: text/html
           body: |
-            Bonjour,
-
-            Le test Playwright **Login.spec.js** a été exécuté.
-            Vous trouverez en pièce jointe le rapport HTML.
-
-            Cordialement,
-            Votre GitHub Action
+            <html>
+              <body style="font-family: Arial, sans-serif; color:#333;">
+                <h2>Rapport du test Playwright : <code>Login.spec.js</code></h2>
+                <p>Bonjour,</p>
+                <p>Le test a été exécuté. Voici un résumé :</p>
+                <table style="border-collapse: collapse; margin: 10px 0;">
+                  <tr>
+                    <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Statut</th>
+                    <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Nombre</th>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #ccc; padding:8px; color:green;">✅ Réussis</td>
+                    <td style="border:1px solid #ccc; padding:8px; font-weight:bold;">${{ steps.summary.outputs.passed }}</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #ccc; padding:8px; color:red;">❌ Échoués</td>
+                    <td style="border:1px solid #ccc; padding:8px; font-weight:bold;">${{ steps.summary.outputs.failed }}</td>
+                  </tr>
+                </table>
+                <p>📎 Le rapport complet en HTML est joint à cet email.</p>
+                <p>Cordialement,<br/>Votre GitHub Action</p>
+              </body>
+            </html>
           attachments: playwright-report/index.html
