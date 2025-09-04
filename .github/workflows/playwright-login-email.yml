@@ -1,4 +1,4 @@
-name: Playwright Login Test on Chrome with Email
+name: Test de connexion Playwright sur Chrome avec envoi par email
 
 on:
   push:
@@ -13,46 +13,52 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout du code
-      - name: Checkout repository
+      # 1️⃣ Récupérer le code
+      - name: Checkout du dépôt
         uses: actions/checkout@v3
 
-      # 2️⃣ Setup Node.js
-      - name: Setup Node.js
+      # 2️⃣ Installer Node.js
+      - name: Configuration de Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 20
 
       # 3️⃣ Installer les dépendances
-      - name: Install dependencies
+      - name: Installation des dépendances
         run: npm install
 
       # 4️⃣ Installer les navigateurs Playwright
-      - name: Install Playwright browsers
+      - name: Installation des navigateurs Playwright
         run: npx playwright install --with-deps
 
-      # 5️⃣ Lancer le test Login.spec.js uniquement sur Chrome
-      - name: Run Login.spec.js on Chrome
-        run: npx playwright test tests/demo/Login.spec.js --project=chrome --headed=false --reporter=html
+      # 5️⃣ Lancer uniquement le test Login.spec.js sur Chrome
+      - name: Exécution du test Login.spec.js sur Chrome
+        run: npx playwright test tests/demo/Login.spec.js --project=chrome --reporter=html
 
       # 6️⃣ Sauvegarder le rapport HTML comme artefact
-      - name: Upload HTML report as artifact
+      - name: Sauvegarder le rapport HTML
         uses: actions/upload-artifact@v3
         with:
-          name: playwright-report
+          name: rapport-playwright
           path: playwright-report/
 
       # 7️⃣ Envoyer le mail avec le rapport attaché
-      - name: Send email with HTML report
+      - name: Envoi du rapport par email
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.mail.yahoo.com
           server_port: 465
-          username: ${{smailyes05@yahoo.fr }}
-          password: ${{exueysvciveaojkj}}
-          subject: "Playwright Login Test Report"
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: "Rapport du test Playwright Login"
           to: "smailyes05@yahoo.fr"
           from: "smailyes05@yahoo.fr"
-          body: "Bonjour,\n\nLe test Playwright Login.spec.js a été exécuté. Vous trouverez le rapport HTML ci-joint."
-          attachments: playwright-report/index.html
+          body: |
+            Bonjour,
 
+            Le test Playwright **Login.spec.js** a été exécuté.
+            Vous trouverez en pièce jointe le rapport HTML.
+
+            Cordialement,
+            Votre GitHub Action
+          attachments: playwright-report/index.html
