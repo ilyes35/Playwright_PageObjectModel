@@ -15,11 +15,11 @@ jobs:
     steps:
       # 1️⃣ Récupérer le code
       - name: Checkout du dépôt
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # 2️⃣ Installer Node.js
       - name: Configuration de Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
@@ -34,7 +34,7 @@ jobs:
       # 5️⃣ Lancer uniquement Login.spec.js sur Chrome avec 2 reporters (html + json)
       - name: Exécution du test Login.spec.js sur Chrome
         run: |
-          npx playwright test tests/demo/Login.spec.js --reporter=html,json > results.json
+          npx playwright test tests/demo/Login.spec.js --project=chrome --reporter=html,json > results.json
 
       # 6️⃣ Extraire un résumé des résultats
       - name: Analyse du rapport JSON
@@ -47,7 +47,7 @@ jobs:
 
       # 7️⃣ Sauvegarder le rapport HTML comme artefact
       - name: Sauvegarder le rapport HTML
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: rapport-playwright
           path: playwright-report/
@@ -81,17 +81,3 @@ jobs:
                     <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Statut</th>
                     <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Nombre</th>
                   </tr>
-                  <tr>
-                    <td style="border:1px solid #ccc; padding:8px; color:green;">✅ Réussis</td>
-                    <td style="border:1px solid #ccc; padding:8px; font-weight:bold;">${{ steps.summary.outputs.passed }}</td>
-                  </tr>
-                  <tr>
-                    <td style="border:1px solid #ccc; padding:8px; color:red;">❌ Échoués</td>
-                    <td style="border:1px solid #ccc; padding:8px; font-weight:bold;">${{ steps.summary.outputs.failed }}</td>
-                  </tr>
-                </table>
-                <p>📎 Le rapport complet en HTML est joint à cet email.</p>
-                <p>Cordialement,<br/>Votre GitHub Action</p>
-              </body>
-            </html>
-          attachments: playwright-report/index.html
