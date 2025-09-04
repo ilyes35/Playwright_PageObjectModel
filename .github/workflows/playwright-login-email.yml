@@ -34,7 +34,7 @@ jobs:
       # 5️⃣ Lancer uniquement Login.spec.js sur Chrome avec 2 reporters (html + json)
       - name: Exécution du test Login.spec.js sur Chrome
         run: |
-          npx playwright test tests/demo/Login.spec.js --project=chrome --reporter=html,json > results.json
+          npx playwright test tests/demo/Login.spec.js --reporter=html,json > results.json
 
       # 6️⃣ Extraire un résumé des résultats
       - name: Analyse du rapport JSON
