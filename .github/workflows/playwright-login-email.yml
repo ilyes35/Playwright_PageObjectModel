@@ -81,3 +81,16 @@ jobs:
                     <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Statut</th>
                     <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Nombre</th>
                   </tr>
+                  <tr>
+                    <td style="border:1px solid #ccc; padding:8px;">Réussi</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${{ steps.summary.outputs.passed }}</td>
+                  </tr>
+                  <tr>
+                    <td style="border:1px solid #ccc; padding:8px;">Échoué</td>
+                    <td style="border:1px solid #ccc; padding:8px;">${{ steps.summary.outputs.failed }}</td>
+                  </tr>
+                </table>
+                <p>Bonne journée,</p>
+                <p><strong>L’équipe QA</strong></p>
+              </body>
+            </html>
