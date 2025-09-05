@@ -5,42 +5,38 @@ on:
     branches:
       - main
   pull_request:
-  # //schedule:
-    # - cron: "0 * * * *" # Toutes les heures (UTC)
   schedule:
-    - cron: "0 0 1 * *" # Chaque mois, le 1er à minuit UTC
-
-
+    - cron: "0 0 1 * *" # Chaque mois, le 1er jour à 00:00 UTC
 
 jobs:
   test:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Récupérer le code
+      # 1️⃣ Checkout
       - name: Checkout du dépôt
         uses: actions/checkout@v4
 
-      # 2️⃣ Installer Node.js
+      # 2️⃣ Node.js
       - name: Configuration de Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # 3️⃣ Installer les dépendances
+      # 3️⃣ Dépendances
       - name: Installation des dépendances
         run: npm install
 
-      # 4️⃣ Installer les navigateurs Playwright
+      # 4️⃣ Playwright
       - name: Installation des navigateurs Playwright
         run: npx playwright install --with-deps
 
-      # 5️⃣ Lancer uniquement Login.spec.js sur Chrome avec 2 reporters (html + json)
+      # 5️⃣ Exécution du test Login.spec.js
       - name: Exécution du test Login.spec.js sur Chrome
         run: |
           npx playwright test tests/demo/Login.spec.js --project=chrome --reporter=html,json > results.json
 
-      # 6️⃣ Extraire un résumé des résultats
+      # 6️⃣ Analyse du rapport JSON
       - name: Analyse du rapport JSON
         id: summary
         run: |
@@ -56,7 +52,27 @@ jobs:
           name: rapport-playwright
           path: playwright-report/
 
-      # 8️⃣ Envoyer le mail avec résumé en HTML
+      # 8️⃣ Copier le rapport HTML et mettre à jour latest.html
+      - name: Copier rapport HTML et créer latest.html
+        run: |
+          TIMESTAMP=$(date +'%Y%m%d-%H%M%S')
+          TARGET_DIR=docs/reports/run-$TIMESTAMP
+          mkdir -p $TARGET_DIR
+          cp -r playwright-report/* $TARGET_DIR
+          cp $TARGET_DIR/index.html docs/reports/latest.html
+
+      # 9️⃣ Commit et push pour GitHub Pages
+      - name: Commit et push rapport HTML
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add docs/reports
+          git commit -m "Mise à jour du rapport Playwright"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # 🔟 Envoyer le mail avec lien stable vers latest.html
       - name: Envoi du rapport par email
         if: always()
         uses: dawidd6/action-send-mail@v3
@@ -77,23 +93,26 @@ jobs:
           body: |
             <html>
               <body style="font-family: Arial, sans-serif; color:#333;">
-                <h2>Rapport du test Playwright : <code>Login.spec.js</code></h2>
-                <p>Bonjour,</p>
-                <p>Le test a été exécuté. Voici un résumé :</p>
-                <table style="border-collapse: collapse; margin: 10px 0;">
-                  <tr>
-                    <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Statut</th>
-                    <th style="border:1px solid #ccc; padding:8px; background:#f2f2f2;">Nombre</th>
-                  </tr>
-                  <tr>
-                    <td style="border:1px solid #ccc; padding:8px;">Réussi</td>
-                    <td style="border:1px solid #ccc; padding:8px;">${{ steps.summary.outputs.passed }}</td>
-                  </tr>
-                  <tr>
-                    <td style="border:1px solid #ccc; padding:8px;">Échoué</td>
-                    <td style="border:1px solid #ccc; padding:8px;">${{ steps.summary.outputs.failed }}</td>
-                  </tr>
-                </table>
+                <!-- Version texte simple pour clients mail non HTML -->
+                <div style="display:none;">
+Rapport du test Playwright : Login.spec.js
+
+Réussi: ${{ steps.summary.outputs.passed }}
+Échoué: ${{ steps.summary.outputs.failed }}
+
+Vous pouvez consulter le rapport complet ici : https://<TON-UTILISATEUR>.github.io/<NOM-DEPOT>/docs/reports/latest.html
+
+Bonne journée,
+L’équipe QA
+                </div>
+
+                <!-- Version HTML -->
+                <h2>Rapport du test Playwright : Login.spec.js</h2>
+                <p>Réussi: ${{ steps.summary.outputs.passed }}</p>
+                <p>Échoué: ${{ steps.summary.outputs.failed }}</p>
+                <p>Vous pouvez consulter le rapport complet ici : 
+                  <a href="https://ilyes35.github.io/Playwright_PageObjectModel/docs/reports/latest.html">Voir le rapport complet</a>
+                </p>
                 <p>Bonne journée,</p>
                 <p><strong>L’équipe QA</strong></p>
               </body>
