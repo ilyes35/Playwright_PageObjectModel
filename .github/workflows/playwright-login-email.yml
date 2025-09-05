@@ -5,8 +5,12 @@ on:
     branches:
       - main
   pull_request:
+  # //schedule:
+    # - cron: "0 * * * *" # Toutes les heures (UTC)
   schedule:
-    - cron: "0 * * * *" # Toutes les heures (UTC)
+    - cron: "0 0 1 * *" # Chaque mois, le 1er à minuit UTC
+
+
 
 jobs:
   test:
